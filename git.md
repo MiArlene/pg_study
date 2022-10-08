@@ -239,7 +239,7 @@ git branch
 # 列出所有的远程分支
 git branch -r
 # 新建一个分支，但依然停留在当前分支
-git brachn [branch-name]
+git branch [branch-name]
 # 新建一个分支，并切换到该分支
 git checkout -b [branch]
 # 合并指定分支到当前分支
