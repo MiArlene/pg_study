@@ -21,12 +21,19 @@
 
 注意：其中时间信息并不代表时间序列。如果说先做好了图网络问题，即先将商品进行了相似性的度量，可以将时间信息转化为时间序列进行聚类。
 
+## 1.3 遇到的问题
+
 ==问题==： 
 
 - 从数据本身来看，似乎没有理由分析类间关系，因此并不存在类与类之间的信息。首先，并不存在一个多个类别关联的信息，比如买家数据，日志数据等。
 - 其次，我们的数据主要是单个的信息。主要的信息就是对单个商品的描述信息。
 
+关于目前按照顺序采样2000个样本进行实验的其他问题：
 
+1. 数据量不够大或者说titile文字体现不明显，titile里很多文字只出现一次，可能一个title中所有文字只在语料库中出现一次。
+2. 经过处理后的title_len  avg = 4.808，语料库的大小为2899，平均每个单词出现次数为3.317。
+
+- 文本较短，提取特征不明显，尽管是进行tf-idf提取还是进行word2vec对单词进行嵌入表达。这都影响后续的图网络效果呈现以及其他方式的嵌入学习。
 
 # 2. 方法
 
@@ -42,17 +49,41 @@
 
 ## 2.1 Text GCN
 
+解决的问题：
+
+之前的文本分类只能单独对文本自身的上下文进行语义提取，而不能够对文本之间的相关信息进行表示。[引注](https://blog.csdn.net/qq_36426650/article/details/107838229)
+
 思路：
 
 采用共现词方式，节点数由文本书和不重复单词数决定。节点的边由文章中单词共现和语料库中单词共现构建。边的权重采用的是tf-idf值。信息传递最多两阶。两层GCN架构。
 
+$$ A_{ij}=\left\{
+\begin{aligned}
+PMI(i,j) & \ i,j \ are \ words, PMI(i,j)>0\   \\
+TF-IDF_{ij} & \ i\ is\ document, j  \ is \ word \\
+1 & \ i = j \\0 & \ otherwise \\
+\end{aligned}
+\right.$$
+
 问题：
 
-没有考虑到单词的顺序。
+没有考虑到单词的顺序。可以考虑注意力机制来应对长尾数据。
 
 ## 2.2 Text Level GNN for Text Classification
 
+构造TextGCN时，边的权重时固定的（单词节点间的边权重是两个单词的PMI，文档-单词节点间的边权重是TF-IDF），限制了边的表达能力，且无法为新样本进行在线测试。
+
+- 为每个输入文本单独构建一个图，文本中的单词作为节点
+
+
+
 ## 2.3 MAGNET： Multi-Label Text Classification Using Attention-based GNN
+
+解决的问题：为语料库中的文档分配不同的标签
+
+为了更好的捕捉标签之间的联系，基于注意力的图神经网络（MAGNET），基于特征矩阵自动学习标签之间的关系。
+
+
 
 ## 2.4 Short Text
 
@@ -154,7 +185,12 @@ insight： 认为词的语义是由器上下文决定。 e.g  "the cat sits one 
 
 3. weighted word embedding aggregation
 
-- 为文本中的每一个单词分配权重，根据单词的idf值分配。
+- 为文本中的每一个单词分配权重，根据单词的idf值分配。 [Representation learning for very short texts using weighted word embedding](https://reader.elsevier.com/reader/sd/pii/S0167865516301362?token=4C77FA694434CF27DA022640E27848876FF3706886158946A1CF59538DBCFA32E6F3E0363DC22D0B640696B997A80165&originRegion=us-east-1&originCreation=20221013071148)
+- isf嵌入法，和tf-idf加权平均法类似。https://aclanthology.org/Q16-1028.pdf
+
+4. graph2vec
+
+- 将单词与单词之间的连接关系用tf-idf或者其他的形式表示，构造成一张图网络，然后运用图神经网络算法生成node embedding。
 
 ## 3.3 对比方法
 
@@ -166,8 +202,6 @@ baseline 与传统的nlp技术对比：
 - LDA
 
 ## 3.4  无监督方法
-
-
 
 **K-means聚类**，可以多采取一些变种，先看看数据特征分布情况，再选择合适的无监督方式。
 
